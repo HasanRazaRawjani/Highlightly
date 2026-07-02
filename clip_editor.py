@@ -1,6 +1,6 @@
 """
-Highlightly v3.0 — Ultra-Fast Valorant Clip Editor (Complete Edition)
----------------------------------------------------------------------
+Highlightly v3.1 — Ultra-Fast Valorant Clip Editor (Cinematic Blur Restored)
+---------------------------------------------------------------------------
 Drop source clips into input_clips/, get back edited vertical shorts in edited_clips/.
 
 Requirements:
@@ -8,9 +8,10 @@ Requirements:
     ffmpeg on PATH
 
 Features:
+  - High-Visibility Layout: 4:3 centered foreground on top of a 16:9 heavily blurred background
   - Powered by Groq Cloud (Whisper Large V3) for near-instant cloud transcriptions
   - Strict Word-Level Timing explicitly forced to eliminate out-of-sync caption ahead-runs
-  - Fast-Talk Sentence Optimizer: Clusters word metrics into fluid 6-word phrases
+  - Fast-Talk Phrase Optimizer: Clusters word metrics into fluid 6-word sentence structures
   - Native ASS Subtitle Pipeline: Multi-color CapCut styled middle yellow text pops
   - Multi-Track Source Audio Downmixing: Combines mic + discord + game sounds flawlessly
   - Low-Payload MP3 Pre-encoding: Cuts down upload payloads to prevent connection resets
@@ -32,7 +33,7 @@ FONT_SIZE          = 85         # Balanced size for sentence-based phrases
 CAPTION_MARGIN_V   = 180        # Vertical alignment clearance from the TOP edge
 OUTPUT_W           = 1080       # Target output resolution width
 OUTPUT_H           = 1920       # Target output resolution height
-ZOOM_AMOUNT        = 1.04       # Constant zoom (1.0 = none, 1.05 = subtle push in)
+ZOOM_AMOUNT        = 1.04       # Constant foreground zoom (1.0 = none, 1.04 = subtle dynamic punch)
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 INPUT_DIR  = os.path.join(BASE_DIR, "input_clips")
@@ -326,49 +327,39 @@ def edit_clip(input_path, output_path):
 
         write_ass(captions, ass_path, OUTPUT_W, OUTPUT_H)
 
-        # ── Geometry Computations ──
-        target = OUTPUT_W / OUTPUT_H
-        src_ar = src_w / src_h
-        if src_ar > target:
-            crop_h = src_h
-            crop_w = int(src_h * target)
-        else:
-            crop_w = src_w
-            crop_h = int(src_w / target)
-        crop_x = (src_w - crop_w) // 2
-        crop_y = (src_h - crop_h) // 2
+        # Format subtitle string layout safely for Windows/Unix directory processing chains
+        ass_ffmpeg = ass_path.replace("\\", "/").replace(":", "\\:")
 
-        # ── Constant Push Zoom Effect ──
+        # ── High-Visibility Cinematic Layout Filter Graph Construction ──
+        # 1. Background layer (bg): Scales to fill vertical bounds, crops to 1080x1920, applies strong blur
+        # 2. Foreground layer (fg): Cuts source into clean 4:3 gaming frame aspect standard, scales width, scales to target
+        # 3. Blending stage: Overlays foreground directly center on top of the blurred background frame
+        # 4. Optional Push Zoom: Applies an extra resizing layer sequence over the composition if configured
+        vf_pipeline = (
+            f"split=2[bg_src][fg_src];"
+            f"[bg_src]scale={OUTPUT_W}:{OUTPUT_H}:force_original_aspect_ratio=increase,crop={OUTPUT_W}:{OUTPUT_H},boxblur=luma_radius=25:luma_power=4[bg];"
+            f"[fg_src]crop='min(iw,ih*4/3)':ih,scale={OUTPUT_W}:-2:flags=lanczos[fg_scaled];"
+            f"[bg][fg_scaled]overlay=(W-w)/2:(H-h)/2"
+        )
+
         if ZOOM_AMOUNT > 1.0:
             zoomed_w = int(OUTPUT_W * ZOOM_AMOUNT)
             zoomed_h = int(OUTPUT_H * ZOOM_AMOUNT)
             zoomed_w += zoomed_w % 2
             zoomed_h += zoomed_h % 2
-            zoom_filter = f"scale={zoomed_w}:{zoomed_h}:flags=lanczos,crop={OUTPUT_W}:{OUTPUT_H}"
-        else:
-            zoom_filter = ""
+            vf_pipeline += f",scale={zoomed_w}:{zoomed_h}:flags=lanczos,crop={OUTPUT_W}:{OUTPUT_H}"
+            
+        vf_pipeline += f",ass='{ass_ffmpeg}'"
 
-        # Format subtitle string layout for Windows/Unix directory processing chains
-        ass_ffmpeg = ass_path.replace("\\", "/").replace(":", "\\:")
-
-        # Assemble Video Filtering Pipeline
-        vf_parts = [
-            f"crop={crop_w}:{crop_h}:{crop_x}:{crop_y}",
-            f"scale={OUTPUT_W}:{OUTPUT_H}:flags=lanczos",
-        ]
-        if zoom_filter:
-            vf_parts.append(zoom_filter)
-        vf_parts.append(f"ass='{ass_ffmpeg}'")
-        vf_string = ",".join(vf_parts)
-
-        # ── Audio Mixing Pipeline ──
+        # ── Audio Mixing & Subprocess Pipeline Building ──
         music_path = pick_music()
         cmd = ["ffmpeg", "-y", "-i", input_path]
         if music_path:
             cmd += ["-stream_loop", "-1", "-i", music_path]
 
-        # Mixed Track Building Matrix
-        filter_complex_blocks = []
+        # Mixed Track Complex Structure Matrix
+        filter_complex_blocks = [f"[0:v]{vf_pipeline}[vout]"]
+        
         if audio_stream_count > 1:
             mix_inputs = "".join(f"[0:a:{i}]" for i in range(audio_stream_count))
             filter_complex_blocks.append(f"{mix_inputs}amix=inputs={audio_stream_count}:duration=longest,volume=1.0[source_audio]")
@@ -379,18 +370,18 @@ def edit_clip(input_path, output_path):
             filter_complex_blocks.append(f"[1:a]volume={MUSIC_VOLUME}[music_scaled]")
             filter_complex_blocks.append("[music_scaled][source_audio]sidechaincompress=threshold=0.15:ratio=4:attack=50:release=300[music_ducked]")
             filter_complex_blocks.append("[source_audio][music_ducked]amix=inputs=2:duration=first[aout]")
-            cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-vf", vf_string, "-map", "0:v", "-map", "[aout]"]
+            cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "[aout]"]
         elif audio_stream_count > 0 and not music_path:
             if filter_complex_blocks:
-                cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-vf", vf_string, "-map", "0:v", "-map", "[source_audio]"]
+                cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "[source_audio]"]
             else:
-                cmd += ["-vf", vf_string, "-map", "0:v", "-map", "0:a:0"]
+                cmd += ["-vf", vf_pipeline, "-map", "0:v", "-map", "0:a:0"]
         elif audio_stream_count == 0 and music_path:
             filter_complex_blocks.append(f"[1:a]volume={MUSIC_VOLUME}[aout]")
-            cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-vf", vf_string, "-map", "0:v", "-map", "[aout]"]
+            cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "[aout]"]
         else:
             cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
-            cmd += ["-vf", vf_string, "-map", "0:v", "-map", "1:a"]
+            cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "1:a"]
 
         cmd += [
             "-c:v", "libx264", "-preset", "fast", "-crf", "18",
@@ -466,4 +457,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()"""
