@@ -1,0 +1,8 @@
+﻿Highlightly Desktop Access
+
+Your email is verified on highlightly.xyz.
+
+Replace this file with the real Highlightly desktop installer when the app is packaged.
+Recommended final file name: Highlightly-Setup.exe or Highlightly-Desktop.zip
+
+The website should handle accounts and downloads. The desktop app should handle MP4 processing, FFmpeg, Groq transcription, and local exports.

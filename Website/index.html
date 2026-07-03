@@ -1,0 +1,311 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Highlightly | Valorant Clip Pipeline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Highlightly home">
+        <span>Highlightly</span><span>v3.1</span>
+      </a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#pipeline">Pipeline</a>
+        <a href="#download">Download</a>
+        <a href="#plans">Access</a>
+        <a href="#checkout">Checkout</a>
+      </nav>
+      <div class="header-actions">
+        <div class="account-chip" id="accountChip" aria-live="polite">
+          <span id="accountEmail">Signed out</span>
+          <strong id="accountPlan">No plan</strong>
+        </div>
+        <button class="quiet-btn" data-open-auth="signin">Sign in</button>
+        <button class="pill-btn light" data-open-auth="create">Get access</button>
+        <button class="quiet-btn signout-btn" id="signOutBtn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-scene" aria-label="Interactive retro workstation model">
+          <canvas id="scene"></canvas>
+        </div>
+        <div class="hero-copy">
+          <p class="kicker">Private Valorant clip engine</p>
+          <h1>Clips that edit themselves.</h1>
+          <p class="hero-line">
+            Drag in gameplay. Highlightly frames the action, mixes the audio, writes the captions,
+            and exports vertical shorts built for feeds.
+          </p>
+          <div class="hero-actions">
+            <button class="pill-btn light" type="button" id="openDownload">Download app</button>
+            <a class="line-link" href="#plans">View plans</a>
+          </div>
+          <div class="hero-proof" aria-label="Highlightly pipeline stats">
+            <span><strong>9:16</strong> vertical output</span>
+            <span><strong>&lt;1s</strong> 60s transcription</span>
+            <span><strong>Word</strong> timed subtitles</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="marquee" aria-label="Pipeline highlights">
+        <span>1080x1920 output</span>
+        <span>4:3 foreground crop</span>
+        <span>Blur canvas</span>
+        <span>Groq Whisper Large V3</span>
+        <span>Word-level captions</span>
+        <span>Audio downmix</span>
+      </section>
+
+      <section class="pipeline" id="pipeline">
+        <div class="section-title">
+          <p class="kicker">What it does</p>
+          <h2>A local editor wrapped like a creator tool.</h2>
+        </div>
+        <div class="process-list">
+          <article>
+            <span class="process-visual" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="15" y="5" width="18" height="38" rx="2"/>
+                <path d="M15 16h18M15 32h18" stroke-opacity="0.35"/>
+                <circle cx="24" cy="24" r="2.4" fill="currentColor" stroke="none"/>
+              </svg>
+              <em>01</em>
+            </span>
+            <h3>Frame</h3>
+            <p>Builds a vertical canvas, blurs the full gameplay behind it, then centers the action in a clean 4:3 crop.</p>
+          </article>
+          <article>
+            <span class="process-visual" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="8" y1="20" x2="8" y2="28"/>
+                <line x1="17" y1="12" x2="17" y2="36"/>
+                <line x1="26" y1="6" x2="26" y2="42"/>
+                <line x1="35" y1="14" x2="35" y2="34"/>
+                <line x1="43" y1="19" x2="43" y2="29"/>
+              </svg>
+              <em>02</em>
+            </span>
+            <h3>Hear</h3>
+            <p>Finds every source audio stream, folds game, comms, and mic into a single transcript-ready track.</p>
+          </article>
+          <article>
+            <span class="process-visual" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="7" y1="14" x2="41" y2="14" stroke-opacity="0.35"/>
+                <line x1="7" y1="24" x2="41" y2="24" style="stroke: var(--red)" stroke-width="3"/>
+                <line x1="7" y1="34" x2="27" y2="34" stroke-opacity="0.35"/>
+              </svg>
+              <em>03</em>
+            </span>
+            <h3>Caption</h3>
+            <p>Uses word timing to group fast speech into readable caption bursts with bright mid-line emphasis.</p>
+          </article>
+          <article>
+            <span class="process-visual" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M24 4v24M16 14l8-10 8 10"/>
+                <path d="M8 32v8a2 2 0 0 0 2 2h28a2 2 0 0 0 2-2v-8"/>
+              </svg>
+              <em>04</em>
+            </span>
+            <h3>Export</h3>
+            <p>Renders finished MP4 shorts for TikTok, Reels, and Shorts with your preset styling already applied.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="studio download-section" id="download">
+        <div class="studio-intro">
+          <p class="kicker">Desktop app</p>
+          <h2>Install Highlightly locally. Let your machine handle the renders.</h2>
+        </div>
+
+        <div class="studio-grid">
+          <section class="dropzone download-card" id="downloadCard" aria-label="Highlightly desktop app download">
+            <div class="drop-inner">
+              <span class="drop-symbol">H</span>
+              <h3>Highlightly Desktop</h3>
+              <p>Download the local app, drop clips into its input folder, and export finished vertical shorts from your own PC.</p>
+              <button class="pill-btn dark" type="button" id="downloadApp">Download app</button>
+            </div>
+            <p class="download-note" id="downloadStatus">Verify your email to unlock downloads.</p>
+          </section>
+
+          <section class="settings-panel" aria-label="Desktop app features">
+            <div class="panel-head">
+              <p class="kicker">Local engine</p>
+              <span>Windows</span>
+            </div>
+            <ul class="app-feature-list">
+              <li>Batch MP4, MOV, and MKV clip processing</li>
+              <li>1080x1920 vertical exports with cinematic blur</li>
+              <li>Word-level captions through Groq Whisper</li>
+              <li>Local FFmpeg render pipeline on your computer</li>
+              <li>Optional music folder and multi-track audio downmix</li>
+            </ul>
+            <p class="status-copy">The website handles accounts and access. The desktop app handles video processing.</p>
+          </section>
+        </div>
+      </section>
+
+      <section class="plans" id="plans">
+        <div class="section-title">
+          <p class="kicker">Access</p>
+          <h2>Choose the lane for your clip pipeline.</h2>
+        </div>
+        <div class="access-grid">
+          <article class="access-plan">
+            <div>
+              <p class="plan-name">Free</p>
+              <p class="price">$0</p>
+            </div>
+            <p>For testing Highlightly and getting the desktop app set up.</p>
+            <ul class="plan-benefits">
+              <li>Verified account</li>
+              <li>Desktop app download</li>
+              <li>Starter clip workflow</li>
+              <li>Community-level updates</li>
+            </ul>
+            <button class="pill-btn dark full" data-plan-choice="Free">Use Free</button>
+          </article>
+          <article class="access-plan pro">
+            <div>
+              <p class="plan-name">Pro</p>
+              <p class="price">$10<span>/month</span></p>
+            </div>
+            <p>For creators who want the full local engine and priority updates.</p>
+            <ul class="plan-benefits">
+              <li>Unlimited local exports</li>
+              <li>Full caption controls</li>
+              <li>Multi-track audio downmix</li>
+              <li>Priority preset releases</li>
+              <li>Founder whitelist support</li>
+            </ul>
+            <button class="pill-btn light full" data-plan-choice="Pro">Upgrade to Pro</button>
+            <button class="trial-link" type="button" data-plan-choice="Trial">Try 3-day free trial</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="checkout" id="checkout">
+        <div>
+          <a class="line-link checkout-back" href="#top">&larr; Back to site</a>
+          <p class="kicker">Secure checkout</p>
+          <h2>Finish the upgrade with Stripe.</h2>
+          <p class="checkout-copy">Stripe handles the payment page, cards, wallets, trials, and receipts. Once your Stripe account is connected, payouts go through Stripe to your bank.</p>
+        </div>
+        <div class="checkout-form" id="checkoutPanel">
+          <div class="checkout-summary">
+            <div>
+              <span>Selected plan</span>
+              <strong id="checkoutPlan">Pro monthly</strong>
+            </div>
+            <p>$10<span>/month</span></p>
+          </div>
+          <div class="payment-methods" aria-label="Supported payment methods">
+            <button class="payment-method active" type="button" data-payment-method="card">
+              <span class="method-icon card-icon" aria-hidden="true"></span>
+              <span>
+                <strong>Card</strong>
+                <small>Visa, Mastercard, Amex</small>
+              </span>
+            </button>
+            <button class="payment-method" type="button" data-payment-method="cashapp">
+              <span class="method-icon cash-icon" aria-hidden="true">$</span>
+              <span>
+                <strong>Cash App Pay</strong>
+                <small>US customers, USD</small>
+              </span>
+            </button>
+            <button class="payment-method" type="button" data-payment-method="bank">
+              <span class="method-icon bank-icon" aria-hidden="true"></span>
+              <span>
+                <strong>Bank</strong>
+                <small>ACH / US bank account</small>
+              </span>
+            </button>
+          </div>
+          <div class="trust-row">
+            <span>Stripe Checkout</span>
+            <span>Secure redirect</span>
+            <span>Cancel anytime</span>
+          </div>
+          <button class="pill-btn light full" type="button" id="stripeCheckoutBtn">Continue to Stripe</button>
+          <button class="text-btn" type="button" id="trialCheckoutBtn">Use 3-day trial link</button>
+          <p class="form-message" id="checkoutMessage" role="status"></p>
+        </div>
+      </section>
+
+      <dialog class="plan-modal" id="planModal">
+        <form method="dialog" class="modal-card plan-modal-card">
+          <button class="close-btn" type="button" id="planCloseBtn" aria-label="Close">x</button>
+          <p class="kicker">Choose plan</p>
+          <h2>Pick your Highlightly access.</h2>
+          <div class="mini-plan-grid">
+            <button class="mini-plan" type="button" data-plan-choice="Free">
+              <span>Free</span>
+              <strong>$0</strong>
+              <small>App download, starter workflow, basic updates.</small>
+            </button>
+            <button class="mini-plan pro-mini" type="button" data-plan-choice="Pro">
+              <span>Pro</span>
+              <strong>$10/mo</strong>
+              <small>Unlimited exports, caption controls, priority presets.</small>
+            </button>
+          </div>
+          <button class="trial-link" type="button" data-plan-choice="Trial">Try Pro free for 3 days</button>
+        </form>
+      </dialog>
+    </main>
+
+    <dialog class="auth-modal" id="authModal">
+      <form method="dialog" class="modal-card" id="authForm" novalidate>
+        <button class="close-btn" type="button" id="authCloseBtn" aria-label="Close">x</button>
+        <p class="kicker" id="authEyebrow">Secure account</p>
+        <h2 id="authTitle">Get into Highlightly</h2>
+        <p class="modal-copy" id="authCopy">Create an account with email and password. Supabase will send the verification email.</p>
+        <button class="google-btn" type="button" id="googleSignInBtn">
+          <span>G</span>
+          Continue with Google
+        </button>
+        <div class="divider"><span>or</span></div>
+        <label>
+          Email
+          <input type="text" id="authEmail" placeholder="you@example.com" autocomplete="email" required />
+        </label>
+        <label>
+          Password
+          <input type="password" id="authPassword" placeholder="Minimum 8 characters" autocomplete="current-password" minlength="8" required />
+        </label>
+        <label class="confirm-field" id="confirmField">
+          Confirm password
+          <input type="password" id="authPasswordConfirm" placeholder="Retype password" autocomplete="new-password" minlength="8" />
+        </label>
+        <button class="pill-btn light full" type="submit" id="authSubmit">Create account</button>
+        <button class="text-btn" type="button" id="resetPasswordBtn">Send password reset email</button>
+        <button class="text-btn auth-switch" type="button" id="authSwitchBtn">Already have an account? Sign in</button>
+        <p class="form-message" id="authMessage" role="status"></p>
+      </form>
+    </dialog>
+
+    <script type="module" src="./supabase-config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

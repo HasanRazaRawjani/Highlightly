@@ -26,14 +26,14 @@ import random
 
 # ─────────── CONFIGURATION ───────────
 # Get a free API key from https://console.groq.com/
-GROQ_API_KEY       = "your_groq_key_here"  # Replace with your gsk_xxxx key
-MUSIC_VOLUME       = 0.08       # Background music ceiling scaling
-FONT_NAME          = "Impact"   # Modern heavy gaming caption standard
-FONT_SIZE          = 85         # Balanced size for sentence-based phrases
-CAPTION_MARGIN_V   = 180        # Vertical alignment clearance from the TOP edge
-OUTPUT_W           = 1080       # Target output resolution width
-OUTPUT_H           = 1920       # Target output resolution height
-ZOOM_AMOUNT        = 1.04       # Constant foreground zoom (1.0 = none, 1.04 = subtle dynamic punch)
+GROQ_API_KEY       = os.environ.get("GROQ_API_KEY", "your_groq_key_here")  # Replace with your gsk_xxxx key
+MUSIC_VOLUME       = float(os.environ.get("HIGHLIGHTLY_MUSIC_VOLUME", "0.08"))       # Background music ceiling scaling
+FONT_NAME          = os.environ.get("HIGHLIGHTLY_FONT_NAME", "Impact")   # Modern heavy gaming caption standard
+FONT_SIZE          = int(os.environ.get("HIGHLIGHTLY_FONT_SIZE", "85"))         # Balanced size for sentence-based phrases
+CAPTION_MARGIN_V   = int(os.environ.get("HIGHLIGHTLY_CAPTION_MARGIN_V", "180"))        # Vertical alignment clearance from the TOP edge
+OUTPUT_W           = int(os.environ.get("HIGHLIGHTLY_OUTPUT_W", "1080"))       # Target output resolution width
+OUTPUT_H           = int(os.environ.get("HIGHLIGHTLY_OUTPUT_H", "1920"))       # Target output resolution height
+ZOOM_AMOUNT        = float(os.environ.get("HIGHLIGHTLY_ZOOM_AMOUNT", "1.04"))       # Constant foreground zoom (1.0 = none, 1.04 = subtle dynamic punch)
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 INPUT_DIR  = os.path.join(BASE_DIR, "input_clips")
@@ -457,4 +457,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()"""
+    main()
