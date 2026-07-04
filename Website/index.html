@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="icon" href="data:," />
+    <link rel="icon" href="./assets/highlightly_logo.png" />
     <link rel="stylesheet" href="./styles.css" />
     <script type="importmap">
       {
@@ -21,10 +21,12 @@
   <body>
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Highlightly home">
+        <img src="./assets/highlightly_logo.png" alt="Highlightly Logo" class="inline-logo brand-logo" />
         <span>Highlightly</span><span>v3.1</span>
       </a>
       <nav class="nav" aria-label="Primary navigation">
         <a href="#pipeline">Pipeline</a>
+        <a href="#architecture">Map</a>
         <a href="#download">Download</a>
         <a href="#plans">Access</a>
         <a href="#checkout">Checkout</a>
@@ -49,7 +51,7 @@
           <p class="kicker">Private Valorant clip engine</p>
           <h1>Clips that edit themselves.</h1>
           <p class="hero-line">
-            Drag in gameplay. Highlightly frames the action, mixes the audio, writes the captions,
+            Drag in gameplay. <img src="./assets/highlightly_logo.png" alt="" class="inline-logo"> Highlightly frames the action, mixes the audio, writes the captions,
             and exports vertical shorts built for feeds.
           </p>
           <div class="hero-actions">
@@ -131,17 +133,27 @@
         </div>
       </section>
 
+      <section class="architecture" id="architecture">
+        <div class="section-title">
+          <p class="kicker">Pipeline Map</p>
+          <h2>How it all connects.</h2>
+        </div>
+        <div class="architecture-graphic">
+          <img src="./assets/website.png" alt="Highlightly Architecture Diagram" />
+        </div>
+      </section>
+
       <section class="studio download-section" id="download">
         <div class="studio-intro">
           <p class="kicker">Desktop app</p>
-          <h2>Install Highlightly locally. Let your machine handle the renders.</h2>
+          <h2>Install <img src="./assets/highlightly_logo.png" alt="" class="inline-logo"> Highlightly locally. Let your machine handle the renders.</h2>
         </div>
 
         <div class="studio-grid">
           <section class="dropzone download-card" id="downloadCard" aria-label="Highlightly desktop app download">
             <div class="drop-inner">
               <span class="drop-symbol">H</span>
-              <h3>Highlightly Desktop</h3>
+              <h3><img src="./assets/highlightly_logo.png" alt="" class="inline-logo"> Highlightly Desktop</h3>
               <p>Download the local app, drop clips into its input folder, and export finished vertical shorts from your own PC.</p>
               <button class="pill-btn dark" type="button" id="downloadApp">Download app</button>
             </div>
@@ -176,7 +188,7 @@
               <p class="plan-name">Free</p>
               <p class="price">$0</p>
             </div>
-            <p>For testing Highlightly and getting the desktop app set up.</p>
+            <p>For testing <img src="./assets/highlightly_logo.png" alt="" class="inline-logo"> Highlightly and getting the desktop app set up.</p>
             <ul class="plan-benefits">
               <li>Verified account</li>
               <li>Desktop app download</li>
@@ -257,7 +269,7 @@
         <form method="dialog" class="modal-card plan-modal-card">
           <button class="close-btn" type="button" id="planCloseBtn" aria-label="Close">x</button>
           <p class="kicker">Choose plan</p>
-          <h2>Pick your Highlightly access.</h2>
+          <h2>Pick your <img src="./assets/highlightly_logo.png" alt="" class="inline-logo"> Highlightly access.</h2>
           <div class="mini-plan-grid">
             <button class="mini-plan" type="button" data-plan-choice="Free">
               <span>Free</span>
@@ -279,7 +291,7 @@
       <form method="dialog" class="modal-card" id="authForm" novalidate>
         <button class="close-btn" type="button" id="authCloseBtn" aria-label="Close">x</button>
         <p class="kicker" id="authEyebrow">Secure account</p>
-        <h2 id="authTitle">Get into Highlightly</h2>
+        <h2 id="authTitle">Get into <img src="./assets/highlightly_logo.png" alt="" class="inline-logo"> Highlightly</h2>
         <p class="modal-copy" id="authCopy">Create an account with email and password. Supabase will send the verification email.</p>
         <button class="google-btn" type="button" id="googleSignInBtn">
           <span>G</span>

@@ -1,0 +1,31 @@
+{
+  "last_email": "admin",
+  "groq_api_key": "",
+  "music_volume": 0.19993215739484393,
+  "font_size": 80,
+  "caption_margin": 234,
+  "zoom": 1.04,
+  "output_width": 1080,
+  "output_height": 1920,
+  "bg_blur": 25,
+  "caption_outline": 5,
+  "quality_crf": 18,
+  "encode_preset": "fast",
+  "caption_words": 6,
+  "highlight_keywords": true,
+  "caption_font": "Arial Black",
+  "selected_files": [
+    "C:\\Users\\rawja\\OneDrive\\Desktop\\Highlightly\\App_Deploy\\input_clips\\MedalTVValorant20260702001213663.mp4"
+  ],
+  "export_ready": [
+    "C:\\Users\\rawja\\OneDrive\\Desktop\\Highlightly\\App_Deploy\\input_clips\\MedalTVValorant20260702001213663.mp4"
+  ],
+  "clip_music_map": {
+    "C:\\Users\\rawja\\OneDrive\\Desktop\\Highlightly\\App_Deploy\\input_clips\\MedalTVValorant20260702001213663.mp4": "C:\\Users\\rawja\\OneDrive\\Desktop\\Highlightly\\App_Deploy\\music\\mondamusic-brazilian-phonk-phonk-542543.mp3"
+  },
+  "account": {
+    "email": "admin",
+    "plan": "Pro Trial"
+  },
+  "clip_music_volume_map": {}
+}

@@ -90,6 +90,21 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* ---------- logos & icons ---------- */
+.inline-logo {
+  height: 1.2em;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 0.25em;
+  margin-top: -0.1em;
+}
+
+.brand-logo {
+  height: 22px;
+  margin-right: 0;
+  margin-top: 0;
+}
+
 /* ---------- header ---------- */
 
 .site-header {
@@ -459,7 +474,8 @@ h1 {
 .pipeline,
 .studio,
 .plans,
-.checkout {
+.checkout,
+.architecture {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
   padding: 110px 0;
@@ -544,6 +560,14 @@ h1 {
 .process-list p {
   color: var(--muted);
   line-height: 1.65;
+}
+
+/* ---------- architecture ---------- */
+.architecture-graphic img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
 }
 
 /* ---------- studio / download ---------- */
@@ -765,20 +789,17 @@ h1 {
   min-height: 34px;
 }
 
-/* ---------- checkout ---------- */
+/* ---------- checkout page logic ---------- */
 
 .checkout {
   display: none;
+}
+
+#checkout:target {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
   align-items: start;
   gap: 40px;
-}
-
-/* checkout is a tab: hidden until #checkout is the active URL target,
-   at which point it takes over as a full screen and every other
-   top-level section is hidden. */
-#checkout:target {
-  display: grid;
   min-height: calc(100vh - 3px);
   padding-top: 160px;
   align-content: start;

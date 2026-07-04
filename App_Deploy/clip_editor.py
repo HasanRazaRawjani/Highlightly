@@ -35,6 +35,14 @@ OUTPUT_W           = int(os.environ.get("HIGHLIGHTLY_OUTPUT_W", "1080"))       #
 OUTPUT_H           = int(os.environ.get("HIGHLIGHTLY_OUTPUT_H", "1920"))       # Target output resolution height
 ZOOM_AMOUNT        = float(os.environ.get("HIGHLIGHTLY_ZOOM_AMOUNT", "1.04"))       # Constant foreground zoom (1.0 = none, 1.04 = subtle dynamic punch)
 
+# New tunables exposed by the desktop app's extended controls
+BG_BLUR            = int(os.environ.get("HIGHLIGHTLY_BG_BLUR", "25"))          # Cinematic backdrop blur strength (boxblur luma_radius)
+CAPTION_OUTLINE    = int(os.environ.get("HIGHLIGHTLY_CAPTION_OUTLINE", "5"))    # Caption stroke/outline thickness
+CRF_QUALITY        = int(os.environ.get("HIGHLIGHTLY_QUALITY", "18"))          # x264 CRF: lower = higher quality & larger file
+ENCODE_PRESET      = os.environ.get("HIGHLIGHTLY_PRESET", "fast")              # x264 preset: speed vs. compression efficiency tradeoff
+MAX_CAPTION_WORDS  = int(os.environ.get("HIGHLIGHTLY_CAPTION_WORDS", "6"))     # Max words grouped per on-screen caption block
+HIGHLIGHT_ENABLED  = os.environ.get("HIGHLIGHTLY_HIGHLIGHT_COLOR", "1") == "1"  # Toggle the CapCut-style keyword color pop
+
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 INPUT_DIR  = os.path.join(BASE_DIR, "input_clips")
 OUTPUT_DIR = os.path.join(BASE_DIR, "edited_clips")
@@ -249,7 +257,7 @@ def write_ass(captions, path, play_w, play_h):
     style = (
         f"Style: Default,{FONT_NAME},{FONT_SIZE},"
         f"&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"  # White text, Black outline, Black shadow
-        f"-1,0,0,0,100,100,0,0,1,5,1,8,"                 # Thick Outline=5, Alignment=8
+        f"-1,0,0,0,100,100,0,0,1,{CAPTION_OUTLINE},1,8,"  # Configurable Outline, Alignment=8
         f"10,10,{CAPTION_MARGIN_V},1"
     )
     lines = [
@@ -274,7 +282,7 @@ def write_ass(captions, path, play_w, play_h):
         
         # CapCut Phrase Highlights: Dynamic mid-sentence yellow highlighting (\c&H00FFFF&)
         tokens = text.split()
-        if len(tokens) > 2:
+        if HIGHLIGHT_ENABLED and len(tokens) > 2:
             mid = len(tokens) // 2
             tokens[mid] = f"{{\\c&H00FFFF&}}{tokens[mid]}"
             if mid + 1 < len(tokens):
@@ -282,7 +290,7 @@ def write_ass(captions, path, play_w, play_h):
             else:
                 tokens[mid] = f"{tokens[mid]}{{\\c&H00FFFFFF&}}"
             text = " ".join(tokens)
-        elif len(tokens) == 2:
+        elif HIGHLIGHT_ENABLED and len(tokens) == 2:
             tokens[1] = f"{{\\c&H00FFFF&}}{tokens[1]}{{\\c&H00FFFFFF&}}"
             text = " ".join(tokens)
             
@@ -294,12 +302,59 @@ def write_ass(captions, path, play_w, play_h):
         f.write("\n".join(lines))
 
 
-def pick_music():
-    """Scans the music directory to select a random audio track."""
+def pick_music(input_path=None):
+    """Selects music: an explicit per-clip pairing takes top priority, then an exact track
+    chosen in the desktop app, falling back to the legacy Random/None/named-file selector."""
+    if input_path:
+        try:
+            music_map = json.loads(os.environ.get("HIGHLIGHTLY_MUSIC_MAP", "{}"))
+        except Exception:
+            music_map = {}
+        abs_input = os.path.abspath(input_path)
+        for key, val in music_map.items():
+            if os.path.abspath(key) == abs_input:
+                if val == "":
+                    return None  # explicit "no music" pairing for this clip
+                return val if os.path.exists(val) else None
+
+    exact_path = os.environ.get("HIGHLIGHTLY_MUSIC_PATH", "").strip()
+    if exact_path:
+        return exact_path if os.path.exists(exact_path) else None
+
+    custom_audio = os.environ.get("HIGHLIGHTLY_CUSTOM_AUDIO", "Random")
+
+    if custom_audio == "None":
+        return None
+
     if not os.path.isdir(MUSIC_DIR):
         return None
+
     files = [f for f in os.listdir(MUSIC_DIR) if f.lower().endswith((".mp3", ".wav", ".aac", ".m4a"))]
-    return os.path.join(MUSIC_DIR, random.choice(files)) if files else None
+    if not files:
+        return None
+
+    if custom_audio == "Random" or custom_audio not in files:
+        return os.path.join(MUSIC_DIR, random.choice(files))
+
+    return os.path.join(MUSIC_DIR, custom_audio)
+
+
+def pick_music_volume(input_path=None):
+    """Per-clip music volume, set from the desktop app's Editor screen — falls back to the
+    global HIGHLIGHTLY_MUSIC_VOLUME default when a clip has no override saved."""
+    if input_path:
+        try:
+            volume_map = json.loads(os.environ.get("HIGHLIGHTLY_MUSIC_VOLUME_MAP", "{}"))
+        except Exception:
+            volume_map = {}
+        abs_input = os.path.abspath(input_path)
+        for key, val in volume_map.items():
+            if os.path.abspath(key) == abs_input:
+                try:
+                    return float(val)
+                except (TypeError, ValueError):
+                    break
+    return MUSIC_VOLUME
 
 
 def edit_clip(input_path, output_path):
@@ -313,7 +368,8 @@ def edit_clip(input_path, output_path):
 
     try:
         src_w, src_h, dur, audio_stream_count = get_info(input_path)
-        print(f"  Metadata → Dimension: {src_w}x{src_h} | Time: {dur:.1f}s | Audio Tracks Located: {audio_stream_count}")
+        # FIXED: Changed → to -> to prevent Windows encoding crashes
+        print(f"  Metadata -> Dimension: {src_w}x{src_h} | Time: {dur:.1f}s | Audio Tracks Located: {audio_stream_count}")
 
         # ── Optimized Downmixed Audio Stream Extraction ──
         if audio_stream_count > 0:
@@ -322,7 +378,7 @@ def edit_clip(input_path, output_path):
         else:
             words = []
             
-        captions = group_captions(words)
+        captions = group_captions(words, max_words=MAX_CAPTION_WORDS)
         print(f"  Generated {len(captions)} multi-word phrase structural text blocks.")
 
         write_ass(captions, ass_path, OUTPUT_W, OUTPUT_H)
@@ -331,13 +387,9 @@ def edit_clip(input_path, output_path):
         ass_ffmpeg = ass_path.replace("\\", "/").replace(":", "\\:")
 
         # ── High-Visibility Cinematic Layout Filter Graph Construction ──
-        # 1. Background layer (bg): Scales to fill vertical bounds, crops to 1080x1920, applies strong blur
-        # 2. Foreground layer (fg): Cuts source into clean 4:3 gaming frame aspect standard, scales width, scales to target
-        # 3. Blending stage: Overlays foreground directly center on top of the blurred background frame
-        # 4. Optional Push Zoom: Applies an extra resizing layer sequence over the composition if configured
         vf_pipeline = (
             f"split=2[bg_src][fg_src];"
-            f"[bg_src]scale={OUTPUT_W}:{OUTPUT_H}:force_original_aspect_ratio=increase,crop={OUTPUT_W}:{OUTPUT_H},boxblur=luma_radius=25:luma_power=4[bg];"
+            f"[bg_src]scale={OUTPUT_W}:{OUTPUT_H}:force_original_aspect_ratio=increase,crop={OUTPUT_W}:{OUTPUT_H},boxblur=luma_radius={BG_BLUR}:luma_power=4[bg];"
             f"[fg_src]crop='min(iw,ih*4/3)':ih,scale={OUTPUT_W}:-2:flags=lanczos[fg_scaled];"
             f"[bg][fg_scaled]overlay=(W-w)/2:(H-h)/2"
         )
@@ -352,7 +404,8 @@ def edit_clip(input_path, output_path):
         vf_pipeline += f",ass='{ass_ffmpeg}'"
 
         # ── Audio Mixing & Subprocess Pipeline Building ──
-        music_path = pick_music()
+        music_path = pick_music(input_path)
+        music_volume = pick_music_volume(input_path)
         cmd = ["ffmpeg", "-y", "-i", input_path]
         if music_path:
             cmd += ["-stream_loop", "-1", "-i", music_path]
@@ -367,7 +420,7 @@ def edit_clip(input_path, output_path):
             filter_complex_blocks.append("[0:a:0]volume=1.0[source_audio]")
 
         if audio_stream_count > 0 and music_path:
-            filter_complex_blocks.append(f"[1:a]volume={MUSIC_VOLUME}[music_scaled]")
+            filter_complex_blocks.append(f"[1:a]volume={music_volume}[music_scaled]")
             filter_complex_blocks.append("[music_scaled][source_audio]sidechaincompress=threshold=0.15:ratio=4:attack=50:release=300[music_ducked]")
             filter_complex_blocks.append("[source_audio][music_ducked]amix=inputs=2:duration=first[aout]")
             cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "[aout]"]
@@ -377,14 +430,14 @@ def edit_clip(input_path, output_path):
             else:
                 cmd += ["-vf", vf_pipeline, "-map", "0:v", "-map", "0:a:0"]
         elif audio_stream_count == 0 and music_path:
-            filter_complex_blocks.append(f"[1:a]volume={MUSIC_VOLUME}[aout]")
+            filter_complex_blocks.append(f"[1:a]volume={music_volume}[aout]")
             cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "[aout]"]
         else:
             cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
             cmd += ["-filter_complex", ";".join(filter_complex_blocks), "-map", "[vout]", "-map", "1:a"]
 
         cmd += [
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", ENCODE_PRESET, "-crf", str(CRF_QUALITY),
             "-c:a", "aac", "-b:a", "192k",
             "-t", str(dur),
             output_path,
@@ -399,7 +452,8 @@ def edit_clip(input_path, output_path):
             return False
 
         file_mb = os.path.getsize(output_path) / 1024 / 1024
-        print(f"  Export Complete → {os.path.basename(output_path)} ({file_mb:.2f} MB)")
+        # FIXED: Changed → to -> to prevent Windows encoding crashes
+        print(f"  Export Complete -> {os.path.basename(output_path)} ({file_mb:.2f} MB)")
         return True
 
     except Exception as e:
@@ -421,18 +475,26 @@ def edit_clip(input_path, output_path):
             except Exception:
                 pass
 
-
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(MUSIC_DIR,  exist_ok=True)
 
     if len(sys.argv) > 1:
-        inp = sys.argv[1]
-        if not os.path.exists(inp):
-            print(f"Error: Target clip path does not exist: {inp}")
-            sys.exit(1)
-        stem = os.path.splitext(os.path.basename(inp))[0]
-        edit_clip(inp, os.path.join(OUTPUT_DIR, f"{stem}_edited.mp4"))
+        targets = sys.argv[1:]
+        print(f"Received {len(targets)} target clip(s) from the desktop app.")
+        success_count = failure_count = 0
+        for inp in targets:
+            if not os.path.exists(inp):
+                print(f"  Skipping missing target: {inp}")
+                failure_count += 1
+                continue
+            stem = os.path.splitext(os.path.basename(inp))[0]
+            out = os.path.join(OUTPUT_DIR, f"{stem}_edited.mp4")
+            if edit_clip(inp, out):
+                success_count += 1
+            else:
+                failure_count += 1
+        print(f"\n{'='*60}\nProcessing metrics: {success_count} exported cleanly, {failure_count} errors encountered.\nOutputs available inside: '{OUTPUT_DIR}/'")
         return
 
     os.makedirs(INPUT_DIR, exist_ok=True)
