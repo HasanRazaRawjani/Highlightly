@@ -6,4 +6,5 @@ import filecmp
 # ─── COMMERCIAL CLIENT-SIDE DEPENDENCY HOOK ───
 def install_client_dependencies():
     required_packages = {
-        "cv2": "opencv-pytho
+        "cv2": "opencv-python",
+        
