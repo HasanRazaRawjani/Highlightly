@@ -1,0 +1,29 @@
+# Secrets — never commit
+App_Deploy/youtube_client.json
+.env
+.env.local
+
+# Installers & builds (too large for GitHub)
+Website/downloads/*.exe
+Website/downloads/*.zip
+App_Deploy/release/
+App_Deploy/build/
+
+# Clips & renders
+App_Deploy/input_clips/
+App_Deploy/edited_clips/
+input_clips/
+edited_clips/
+
+# Temp / debug / cache
+App_Deploy/_temp/
+App_Deploy/__pycache__/
+App_Deploy/crash_log.txt
+__pycache__/
+*.pyc
+*.lnk
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
